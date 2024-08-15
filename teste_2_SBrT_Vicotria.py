@@ -19,7 +19,7 @@ import random
 
 
 K = 10                                  # N° dispositivos
-N = 4                                  # N° de antenas
+N = 4                                   # N° de antenas
 R = 10                                  # Raio [m]
 f = 915 *(10**6)                        # Freq. da portadora
 kappa = 1.5                             # Fator Rice
@@ -27,7 +27,7 @@ mu = 10.73 * 10**(-3)                   # Max pot no IoT
 a = 0.2308                              # constante circuito a
 b = 5.365                               # constante circuito b  
 Pt = 3                                  # Max pot. de transmissão
-E_min = 200 * (10**-6)                # Min Energia no IoT [J]
+E_min = 200 * (10**-6)                  # Min Energia no IoT [J]
 alpha = 2.7                             # Coef. perda de percurso
 c = 3*(10**(8))                         # Vel. da luz
 Omega = 1/(1+np.exp(a*b))               # Constante resposta 0_in-0_out
@@ -68,13 +68,14 @@ def Phi_k(tau_k, Gamma_k): # Energia coletada
     Phi_k = tau_k * ((Gamma_k - (mu*Omega))/(1-Omega))
     return Phi_k
 
-def tau_k_estrela_k_igual_1(Gamma_k):
+def tau_k_igual_1(Gamma_k):
     tau_k_estrela_k_igual_1 = (E_min * (1 - Omega))/(Gamma_k - (mu*Omega))
     return tau_k_estrela_k_igual_1
 
 
 
 #%%
+#Rodando
 canal_h = np.array([])
 h_barra = np.array([])
 h_til = np.array([])
@@ -101,26 +102,47 @@ H = np.zeros((K,N))
 
 seed = np.random.seed(9)
 
-
+k=0
 for k in range (0, K):
     # Canal h
     
-    h_barra = h_barra_k(N)
-    h_til = h_til_k(N)
-    canal_h = canal_h_k(kappa, h_barra, h_til)
-    h_k = np.conjugate(np.transpose(canal_h))
+    h_barra = h_barra_k(N) # LoS (1x4)
+    h_til = h_til_k(N)     # NLoS (1x4) 
+    canal_h = canal_h_k(kappa, h_barra, h_til) # (1x4)
+    h_k = np.conjugate(np.transpose(canal_h)) # Hermitiano (4x1)
     
     # Beta
     x = np.random.randint(1,10)
     y = np.random.randint(1,10)
-    Beta = Beta_k(dist_euclid_quad(x,y))
+    Beta = Beta_k(dist_euclid_quad(x,y)) # (Constante)
     
-    Psi_k_estrela = (np.sqrt(Pt/N)) *(h_barra/np.abs(h_barra))
+    # Beamforming S-CSI
+    Psi_k_estrela = (np.sqrt(Pt/N)) *(h_barra/np.abs(h_barra)) #(1x4)
     
+    # Potência   
+    Pot = np.append(Pot, Beta*(np.abs(Psi_k_estrela @ h_k))**2) # array(10)
+
+    # Gamma (função logística tradicional)
+    Gamma = Gamma_k(Pot) # array(10)  
     
-    Pot = np.append(Pot, Beta*(np.abs(Psi_k_estrela @ h_k))**2)
-    
-    
-    
+    # Tau_k para k=0
+    if k == 0:
+        tau_0 = (E_min*(1-Omega)) / (Gamma[0] - (mu*Omega)) # Valor fixo
+        tau_k_estrela = np.append(tau_k_estrela, tau_0)
+    else:
+        # for j in range (0, K-1):
+        Gamma_k_j = mu / (1+(np.exp(-a*(Beta*(((np.abs(Psi_k_estrela[j]*h_k[j]))**2)-b)))))
+        Phi_NEIG_j = (tau_k_estrela[k-1]) * ((Gamma_k_j[j] - mu*Omega)/1-Omega)
+        tau = ((E_min - Phi_NEIG_j) * (1-Omega)) / (Gamma[k] - (mu*Omega))
+        tau_k_estrela = np.append(tau_k_estrela, tau)
+
+
+
+
+
+
+
+
+
     
     
