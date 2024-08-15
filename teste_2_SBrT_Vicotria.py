@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 import random
 
 
-K = 10                                  # N° dispositivos
+K = 10                                 # N° dispositivos
 N = 4                                   # N° de antenas
 R = 10                                  # Raio [m]
 f = 915 *(10**6)                        # Freq. da portadora
@@ -128,21 +128,14 @@ for k in range (0, K):
     # Tau_k para k=0
     if k == 0:
         tau_0 = (E_min*(1-Omega)) / (Gamma[0] - (mu*Omega)) # Valor fixo
-        tau_k_estrela = np.append(tau_k_estrela, tau_0)
+        tau_k_estrela = np.append(tau_k_estrela, tau_0) # Vetor para calcular Phi_NEIG
     else:
-        # for j in range (0, K-1):
-        Gamma_k_j = mu / (1+(np.exp(-a*(Beta*(((np.abs(Psi_k_estrela[j]*h_k[j]))**2)-b)))))
-        Phi_NEIG_j = (tau_k_estrela[k-1]) * ((Gamma_k_j[j] - mu*Omega)/1-Omega)
+        produto_escalar = np.abs(Psi_k_estrela @ h_k)**2 # Norma Psi * H_hermitiano
+        Gamma_k_j = mu / (1+(np.exp(-a*((Beta*produto_escalar)-b)))) # Valor
+        Phi_NEIG_j = (tau_k_estrela[k-1]) * ((Gamma_k_j - (mu*Omega))/1-Omega)
         tau = ((E_min - Phi_NEIG_j) * (1-Omega)) / (Gamma[k] - (mu*Omega))
         tau_k_estrela = np.append(tau_k_estrela, tau)
+tau_total = np.append(tau_total, sum(tau_k_estrela))
 
 
 
-
-
-
-
-
-
-    
-    
