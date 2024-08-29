@@ -78,14 +78,15 @@ for k in range (0,K):
         tempo_carregamento[0] = (E_min * (1-Omega)) / (Gamma[0] - (mu*Omega))
     else:
         for j in range (0, k):
+            print(j)
             # Energia total coletada carregando o vizinho (Phi_NEIG):
-            Gamma_kj[k] = mu / (1 + (np.exp(-a*(Beta @ ((np.abs(Beamform_SCSI[j][:] @ hH[:][:]))**2)-b))))
-            Phi_NEIG = tempo_carregamento[j] * ((Gamma_kj - (mu*Omega)) / 1 - Omega)
+            Gamma_kj[j] = mu / (1 + (np.exp(-a*(Beta @ ((np.abs(Beamform_SCSI[j][:] @ hH[:][:]))**2)-b))))
+            Phi_NEIG = tempo_carregamento[j] * ((Gamma_kj - (mu*Omega)) / (1 - Omega))
             if np.sum(Phi_NEIG) > E_min:
                 tempo_carregamento[k] = 0
             else:
                 tempo_carregamento[k] = ((E_min - np.sum(Phi_NEIG))*(1-Omega)) / (Gamma[k] - (mu*Omega))
-
+    print(f"k = {k}")
 tempo_carregamento_total = np.sum(tempo_carregamento)
                 
 
